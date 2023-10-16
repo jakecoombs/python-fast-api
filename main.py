@@ -19,6 +19,12 @@ my_posts = [
 ]
 
 
+def find_post(id: int):
+    for post in my_posts:
+        if post["id"] == id:
+            return post
+
+
 @app.get("/")
 def read_root():
     return {"message": "hello world"}
@@ -41,3 +47,14 @@ def create_post(post: Post):
 
     # Return created post
     return {"data": post_dict}
+
+
+@app.get("/posts/{id}")
+def get_post(id: int):
+    """Get post by id."""
+
+    # Get post
+    post = find_post(id)
+
+    # Return post
+    return {"data": post}
