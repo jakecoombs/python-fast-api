@@ -16,6 +16,6 @@ ruff:
 lint:
 	@$(MAKE) -s black ruff mypy
 
-.PHONY: reload
-reload:
-	uvicorn main:app --reload
+.PHONY: run
+run:
+	uvicorn app.main:app --reload
