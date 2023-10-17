@@ -7,5 +7,7 @@
         },
         "editor.formatOnSave": true,
         "editor.defaultFormatter": "ms-python.black-formatter"
-    }
+    },
+    "mypy.enabled": true,
+    "mypy.runUsingActiveInterpreter": true
 }
