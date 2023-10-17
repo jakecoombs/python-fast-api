@@ -19,9 +19,9 @@ my_posts = [
 ]
 
 
-def find_post(id: int):
+def find_post(post_id: int):
     for post in my_posts:
-        if post["id"] == id:
+        if post["id"] == post_id:
             return post
 
 
@@ -61,11 +61,11 @@ def get_latest_post():
 
 
 @app.get("/posts/{id}")
-def get_post_by_id(id: int):
+def get_post_by_id(post_id: int):
     """Get post by id."""
 
     # Get post
-    post = find_post(id)
+    post = find_post(post_id)
 
     # Return post
     return {"data": post}

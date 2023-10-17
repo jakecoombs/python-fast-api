@@ -1,3 +1,11 @@
 {
-    "python.defaultInterpreterPath": "~/.virtualenvs/fast-api/bin/python"
+    "python.defaultInterpreterPath": "~/.virtualenvs/fast-api/bin/python",
+    "[python]": {
+        "editor.codeActionsOnSave": {
+            "source.fixAll.ruff": true,
+            "source.organizeImports.ruff": true
+        },
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "ms-python.black-formatter"
+    }
 }
