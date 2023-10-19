@@ -93,8 +93,6 @@ def get_post_by_id(post_id: int) -> dict[str, Any]:
 def delete_post_by_id(post_id: int) -> Response:
     """Delete post by id."""
 
-    print("DELETING")
-
     # Delete post
     index = find_index_of_post(post_id)
 

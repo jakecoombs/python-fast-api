@@ -13,8 +13,7 @@ ruff:
 	${PYTHON} -m ruff check . --fix
 
 .PHONY: lint
-lint:
-	@$(MAKE) -s black ruff mypy
+lint: black ruff mypy
 
 .PHONY: run
 run:
