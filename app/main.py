@@ -1,10 +1,26 @@
 from random import randrange
 from typing import Any
 
+import psycopg2
 from fastapi import FastAPI, HTTPException, Response, status
+from psycopg2.extras import RealDictCursor
 from pydantic import BaseModel
 
+from .config import settings
+
 app = FastAPI()
+
+try:
+    print(f"Attempting to connect to {settings.db_url}")
+    conn = psycopg2.connect(
+        settings.db_url,
+        cursor_factory=RealDictCursor,
+    )
+    cursor = conn.cursor()
+    print("Connected to db successfully.")
+except Exception as exc:
+    print("Failed to connect to db.")
+    print(exc)
 
 
 class Post(BaseModel):
@@ -44,7 +60,9 @@ def read_root() -> dict[str, Any]:
 @app.get("/posts")
 def get_posts() -> dict[str, Any]:
     """Get all posts."""
-    return {"data": my_posts}
+    cursor.execute("""SELECT * FROM posts""")
+    posts = cursor.fetchall()
+    return {"data": posts}
 
 
 @app.post("/posts", status_code=status.HTTP_201_CREATED)

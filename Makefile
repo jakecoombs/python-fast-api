@@ -14,7 +14,3 @@ ruff:
 
 .PHONY: lint
 lint: black ruff mypy
-
-.PHONY: run
-run:
-	uvicorn app.main:app --reload
