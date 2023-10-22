@@ -1,4 +1,3 @@
-from random import randrange
 from typing import Any
 
 import psycopg2
@@ -30,28 +29,6 @@ class Post(BaseModel):
     rating: int | None = None
 
 
-my_posts = [
-    {"id": 1, "title": "Title of post 1", "content": "Content of post 1"},
-    {"id": 2, "title": "Dog Breeds", "content": "Labs, Daschunds, ..."},
-]
-
-
-def find_post(post_id: int) -> dict[str, Any] | None:
-    for post in my_posts:
-        if post["id"] == post_id:
-            return post
-
-    return None
-
-
-def find_index_of_post(post_id: int) -> int | None:
-    for i, p in enumerate(my_posts):
-        if p["id"] == post_id:
-            return i
-
-    return None
-
-
 @app.get("/")
 def read_root() -> dict[str, Any]:
     return {"message": "hello world"}
@@ -60,8 +37,11 @@ def read_root() -> dict[str, Any]:
 @app.get("/posts")
 def get_posts() -> dict[str, Any]:
     """Get all posts."""
+
+    # Fetch all posts
     cursor.execute("""SELECT * FROM posts""")
     posts = cursor.fetchall()
+
     return {"data": posts}
 
 
@@ -70,20 +50,32 @@ def create_post(post: Post) -> dict[str, Any]:
     """Create a new post."""
 
     # Create new post
-    post_dict = post.model_dump()
-    post_dict["id"] = randrange(3, 10000000)
-    my_posts.append(post_dict)
+    cursor.execute(
+        """
+        INSERT INTO posts (title, content, published)
+        VALUES (%s, %s, %s)
+        RETURNING *
+    """,
+        (
+            post.title,
+            post.content,
+            post.published,
+        ),
+    )
+    created_post = cursor.fetchone()
+    conn.commit()
 
     # Return created post
-    return {"data": post_dict}
+    return {"data": created_post}
 
 
 @app.get("/posts/latest")
 def get_latest_post() -> dict[str, Any]:
     """Get latest post."""
 
-    # Get post
-    post = my_posts[-1]
+    # Get latest created post
+    cursor.execute("""SELECT * FROM posts ORDER BY created_at DESC LIMIT 1""")
+    post = cursor.fetchone()
 
     # Return post
     return {"data": post}
@@ -94,7 +86,8 @@ def get_post_by_id(post_id: int) -> dict[str, Any]:
     """Get post by id."""
 
     # Get post
-    post = find_post(post_id)
+    cursor.execute("""SELECT * FROM posts WHERE id=%s""", (post_id,))
+    post = cursor.fetchone()
 
     # Return 404 if not found
     if not post:
@@ -112,15 +105,16 @@ def delete_post_by_id(post_id: int) -> Response:
     """Delete post by id."""
 
     # Delete post
-    index = find_index_of_post(post_id)
+    cursor.execute("""DELETE FROM posts WHERE id=%s RETURNING *""", (post_id,))
+    deleted_post = cursor.fetchone()
 
-    if index is None:
+    if deleted_post is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Post not found for {post_id=}",
         )
 
-    my_posts.pop(index)
+    conn.commit()
 
     # Return success message
     return Response(status_code=status.HTTP_204_NO_CONTENT)
@@ -131,17 +125,24 @@ def update_post_by_id(post_id: int, post: Post) -> dict[str, Any]:
     """Update post by id."""
 
     # Update post
-    index = find_index_of_post(post_id)
+    cursor.execute(
+        """
+            UPDATE posts
+            SET title=%s, content=%s, published=%s 
+            WHERE id=%s 
+            RETURNING *
+        """,
+        (post.title, post.content, post.published, post_id),
+    )
+    updated_post = cursor.fetchone()
 
-    if index is None:
+    if updated_post is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Post not found for {post_id=}",
         )
 
-    post_dict = post.model_dump()
-    post_dict["id"] = post_id
-    my_posts[index] = post_dict
+    conn.commit()
 
     # Return new post
-    return {"data": post_dict}
+    return {"data": updated_post}
