@@ -1,3 +1,4 @@
 fastapi[all]
 psycopg2-binary
-pydantic_settings
+pydantic-settings
+sqlalchemy

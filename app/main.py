@@ -1,13 +1,20 @@
+from datetime import datetime
 from typing import Any
 
 import psycopg2
-from fastapi import FastAPI, HTTPException, Response, status
+from fastapi import Depends, FastAPI, HTTPException, Response, status
 from psycopg2.extras import RealDictCursor
-from pydantic import BaseModel
+from pydantic import BaseModel, TypeAdapter
+from sqlalchemy.orm import Session
 
+from . import models
 from .config import settings
+from .database import Base, engine, get_db
+
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+
 
 try:
     print(f"Attempting to connect to {settings.db_url}")
@@ -27,6 +34,10 @@ class Post(BaseModel):
     content: str
     published: bool = True
     rating: int | None = None
+    created_at: datetime | None = None
+
+    class Config:
+        from_attributes = True
 
 
 @app.get("/")
@@ -35,14 +46,13 @@ def read_root() -> dict[str, Any]:
 
 
 @app.get("/posts")
-def get_posts() -> dict[str, Any]:
+def get_posts(db: Session = Depends(get_db)) -> dict[str, Any]:
     """Get all posts."""
 
     # Fetch all posts
-    cursor.execute("""SELECT * FROM posts""")
-    posts = cursor.fetchall()
+    results = db.query(models.Posts).all()
 
-    return {"data": posts}
+    return {"data": TypeAdapter(list[Post]).validate_python(results)}
 
 
 @app.post("/posts", status_code=status.HTTP_201_CREATED)
